@@ -1,0 +1,97 @@
+#include <iostream>
+#include <string>
+#include <unordered_map>
+#include "attacks.hpp"
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+using namespace std;
+
+unordered_map<string, string> parseArgs(int argc, char *argv[]) {
+    unordered_map<string, string> args;
+    for (int i = 1; i < argc - 1; i++) {
+        string key = argv[i];
+        if (key.rfind("--", 0) == 0) {
+            args[key] = argv[i + 1];
+            i++;
+        }
+    }
+    return args;
+}
+
+void printBanner(){
+    std::cout << R"(
+-----------------------------------------------------------------------------------------------------------------    
+|                      ______                                                                                    | 
+|                   .-"      "-.   ██████╗ ██╗    ██╗ ██████╗██████╗  █████╗  ██████╗██╗  ██╗███████╗██████╗     | 
+|                  /            \  ██╔══██╗██║    ██║██╔════╝██╔══██╗██╔══██╗██╔════╝██║ ██╔╝██╔════╝██╔══██╗    |
+|                 |              | ██████╔╝██║ █╗ ██║██║     ██████╔╝███████║██║     █████╔╝ █████╗  ██████╔╝    |
+|                 |,  .-.  .-.  ,| ██╔═══╝ ██║███╗██║██║     ██╔══██╗██╔══██║██║     ██╔═██╗ ██╔══╝  ██╔══██╗    |
+|                 | )(__/  \__)( | ██║     ╚███╔███╔╝╚██████╗██║  ██║██║  ██║╚██████╗██║  ██╗███████╗██║  ██║    |
+|                 |/     /\     \| ╚═╝      ╚══╝╚══╝  ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝    |
+|       (@_       (_     ^^     _)                    Password Cracker Tool - CLI Version                        |
+|  _     ) \_______\__|IIIIII|__/_____________________________________________________________________________   |
+| (_)@8@8{}<________|-\IIIIII/-|______________________________________________________________________________>  |
+|        )_/        \          /                                                                                 |
+|       (@           `--------`                                                                                  |
+-----------------------------------------------------------------------------------------------------------------
+
+    )" <<std::endl;
+}
+
+
+int main(int argc, char *argv[]) {
+    
+    #ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8);
+    #endif
+
+    printBanner();
+
+    if (argc < 3) {
+        cerr << "Usage:\n";
+        cerr << "  --attack [brute|dict] --target <password> [other flags]\n";
+        cerr << "Examples:\n";
+        cerr << "  ./pwcracker --attack brute --target cat --maxlen 4 --charset abc\n";
+        cerr << "  ./pwcracker --attack dict --target cat --wordlist wordlists/test.txt\n";
+        return 1;
+    }
+
+    unordered_map<string, string> args = parseArgs(argc, argv);
+
+    if (args.find("--attack") == args.end() || args.find("--target") == args.end()) {
+        cerr << "Error: --attack and --target are required.\n";
+        return 1;
+    }
+
+    string attackType = args["--attack"];
+    string target = args["--target"];
+
+    if (attackType == "brute") {
+        if (args.find("--maxlen") == args.end() || args.find("--charset") == args.end()) {
+            cerr << "Error: --maxlen and --charset are required for brute force.\n";
+            return 1;
+        }
+
+        int maxLen = stoi(args["--maxlen"]);
+        string charset = args["--charset"];
+        runBruteForce(target, maxLen, charset);
+
+    } else if (attackType == "dict") {
+        if (args.find("--wordlist") == args.end()) {
+            cerr << "Error: --wordlist is required for dictionary attack.\n";
+            return 1;
+        }
+
+        string wordlist = args["--wordlist"];
+        runDictionaryAttack(target, wordlist);
+
+    } else {
+        cerr << "Error: Unknown attack type. Use 'brute' or 'dict'.\n";
+        return 1;
+    }
+
+    return 0;
+}

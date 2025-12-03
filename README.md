@@ -1,8 +1,30 @@
-#  Roadmap to Build the Tool & the Updates
+#  Password Cracker - Educational Security Tool
 
- **Warning**: This tool is under active development.  
-The following is a list of planned updates and improvements.  
-Feel free to contribute by implementing any feature from the list!  
+A comprehensive password cracking toolkit for educational purposes, penetration testing, and security research. This tool demonstrates various password attack techniques both offline and online.
+
+**Status:** All core features completed ✅
+
+---
+
+## Features Overview
+
+### Offline Attacks
+- **Brute Force** - Exhaustive search with customizable charset
+- **Dictionary** - Wordlist-based attacks
+- **Hybrid** - Combines wordlist with number patterns
+- **Rule-Based** - Applies transformations (leet speak, capitalization, etc.)
+- **Rainbow Tables** - Pre-computed hash lookup tables
+
+### Online Attacks (Requires Authorization)
+- **HTTP Login Brute Force** - Web form authentication testing
+- **Credential Stuffing** - Breach database validation
+- **Password Spraying** - Single password across multiple accounts
+- **FTP Brute Force** - File transfer protocol testing
+
+### Hash Support
+- MD5, SHA1, SHA256, NTLM, BCRYPT (detection)
+- Automatic hash type detection
+- Hash comparison across all attack modes
 
 ---
 
@@ -110,11 +132,67 @@ chmod +x install.sh
 
 ---
 
-## Phase 3 (PENDING): Online Cracking Engine
-1. Basic HTTP Login Brute Force (test dummy web server locally)
-2. Credential Stuffing with Proxy Support
-3. FTP/SSH Brute Force using libraries like libssh or raw sockets
-4. Password Spraying Logic
-5. Phishing Simulation with Key Capture
+## Phase 3 (COMPLETED): Online Cracking Engine
+1.  HTTP Login Brute Force (POST request support)
+2.  Credential Stuffing with Proxy Support (breach database testing)
+3.  FTP Brute Force using raw sockets (SSH support via external tools)
+4.  Password Spraying Logic (account lockout prevention)
+
+**Features:**
+- Mandatory authorization warnings before execution
+- Built-in rate limiting to prevent DoS
+- Configurable delays between attempts
+- Support for custom form fields
+- Connection timeout handling
+- Clear success/failure indicators
+
+**Important Security Notes:**
+- ⚠️ **LEGAL AUTHORIZATION REQUIRED** - You must have explicit written permission
+- All online attacks require user confirmation before execution
+- Designed for localhost testing and authorized pentesting only
+- Rate limiting prevents service disruption
+- Educational tool for security research and CTF competitions
+
+---
+
+## Online Attack Usage Examples
+
+### 7. HTTP Login Brute Force
+```bash
+# Basic HTTP brute force
+./pwcracker --attack http-brute --url http://localhost/login --username admin --wordlist wordlists/test.txt
+
+# With custom delay and form fields
+./pwcracker --attack http-brute --url http://localhost/login --username admin --wordlist wordlists/test.txt --delay 2000 --userfield email --passfield pass
+```
+
+### 8. Credential Stuffing
+```bash
+# Test breach credentials (format: username:password per line)
+./pwcracker --attack credential-stuffing --url http://localhost/login --credentials breached.txt --delay 1000
+
+# With proxy support
+./pwcracker --attack credential-stuffing --url http://localhost/login --credentials breached.txt --proxy http://proxy:8080
+```
+
+### 9. Password Spraying
+```bash
+# Test single password against multiple users
+./pwcracker --attack password-spray --url http://localhost/login --userlist users.txt --password Welcome2024! --delay 5000
+```
+
+### 10. FTP Brute Force
+```bash
+# Basic FTP brute force
+./pwcracker --attack ftp-brute --host localhost --port 21 --username admin --wordlist wordlists/test.txt
+
+# With custom delay
+./pwcracker --attack ftp-brute --host 192.168.1.10 --port 21 --username ftpuser --wordlist wordlists/test.txt --delay 2000
+```
+
+**Note:** For SSH brute force, consider using established tools like:
+- Hydra: `hydra -l user -P wordlist.txt ssh://target`
+- Ncrack: `ncrack -U users.txt -P passwords.txt ssh://target`
+- Medusa: `medusa -h target -u user -P wordlist.txt -M ssh`
 
 ---

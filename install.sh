@@ -18,9 +18,9 @@ fi
 echo -e "${GREEN}[+] Creating build directory...${RESET}"
 mkdir -p build
 
-echo -e "${GREEN}[+] Compiling source files (with OpenSSL)...${RESET}"
+echo -e "${GREEN}[+] Compiling source files (with OpenSSL and network support)...${RESET}"
 g++ src/main.cpp src/attacks/*.cpp src/utils/*.cpp \
-    -I include -lssl -lcrypto -o build/pwcracker
+    -I include -lssl -lcrypto -lpthread -o build/pwcracker
 
 echo -e "${GREEN}[+] Build complete!${RESET}"
 echo -e "Run with: ./build/pwcracker --help"

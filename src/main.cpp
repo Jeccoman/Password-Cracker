@@ -2,6 +2,7 @@
 #include <string>
 #include <unordered_map>
 #include "attacks.hpp"
+#include "online_attacks.hpp"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -56,16 +57,19 @@ int main(int argc, char *argv[]) {
 
     if (argc < 3) {
         cerr << "Usage:\n";
+        cerr << "OFFLINE ATTACKS:\n";
         cerr << "  --attack [brute|dict|hybrid|rules|rainbow] --target <password|hash> [other flags]\n";
         cerr << "  --mode generate --output <file> --charset <chars> --maxlen <n> [other flags]\n";
-        cerr << "Examples:\n";
+        cerr << "\nONLINE ATTACKS (REQUIRES AUTHORIZATION):\n";
+        cerr << "  --attack http-brute --url <url> --username <user> --wordlist <file> [--delay <ms>]\n";
+        cerr << "  --attack credential-stuffing --url <url> --credentials <file> [--delay <ms>]\n";
+        cerr << "  --attack password-spray --url <url> --userlist <file> --password <pwd> [--delay <ms>]\n";
+        cerr << "  --attack ftp-brute --host <host> --port <port> --username <user> --wordlist <file> [--delay <ms>]\n";
+        cerr << "\nExamples:\n";
         cerr << "  ./pwcracker --attack brute --target cat --maxlen 4 --charset abc\n";
         cerr << "  ./pwcracker --attack dict --target cat --wordlist wordlists/test.txt\n";
-        cerr << "  ./pwcracker --attack hybrid --target password123 --wordlist wordlists/test.txt --maxdigits 3\n";
-        cerr << "  ./pwcracker --attack rules --target Password123! --wordlist wordlists/test.txt\n";
-        cerr << "  ./pwcracker --attack rainbow --target 5f4dcc3b5aa765d61d8327deb882cf99 --table rainbow.db --charset abc --maxlen 6\n";
-        cerr << "  ./pwcracker --mode generate --output rainbow.db --charset abc --maxlen 6 --chains 10000 --chainlen 1000\n";
-        cerr << "  ./pwcracker --attack brute --target d077f244def8a70e5ea758bd8352fcd8 --maxlen 4 --charset abc --hash\n";
+        cerr << "  ./pwcracker --attack http-brute --url http://localhost/login --username admin --wordlist wordlists/test.txt\n";
+        cerr << "  ./pwcracker --attack ftp-brute --host localhost --port 21 --username admin --wordlist wordlists/test.txt\n";
         return 1;
     }
 
@@ -156,8 +160,65 @@ int main(int argc, char *argv[]) {
         int maxLen = stoi(args["--maxlen"]);
         runRainbowAttack(target, tablePath, charset, maxLen);
 
+    } else if (attackType == "http-brute") {
+        if (args.find("--url") == args.end() || args.find("--username") == args.end() || args.find("--wordlist") == args.end()) {
+            cerr << "Error: --url, --username, and --wordlist are required for HTTP brute force.\n";
+            return 1;
+        }
+
+        string url = args["--url"];
+        string username = args["--username"];
+        string wordlist = args["--wordlist"];
+        int delay = (args.find("--delay") != args.end()) ? stoi(args["--delay"]) : 1000;
+        string userField = (args.find("--userfield") != args.end()) ? args["--userfield"] : "username";
+        string passField = (args.find("--passfield") != args.end()) ? args["--passfield"] : "password";
+
+        runHTTPBruteForce(url, username, wordlist, userField, passField, delay);
+
+    } else if (attackType == "credential-stuffing") {
+        if (args.find("--url") == args.end() || args.find("--credentials") == args.end()) {
+            cerr << "Error: --url and --credentials are required for credential stuffing.\n";
+            return 1;
+        }
+
+        string url = args["--url"];
+        string credentials = args["--credentials"];
+        int delay = (args.find("--delay") != args.end()) ? stoi(args["--delay"]) : 1000;
+        string proxy = (args.find("--proxy") != args.end()) ? args["--proxy"] : "";
+
+        runCredentialStuffing(url, credentials, proxy, delay);
+
+    } else if (attackType == "password-spray") {
+        if (args.find("--url") == args.end() || args.find("--userlist") == args.end() || args.find("--password") == args.end()) {
+            cerr << "Error: --url, --userlist, and --password are required for password spraying.\n";
+            return 1;
+        }
+
+        string url = args["--url"];
+        string userlist = args["--userlist"];
+        string password = args["--password"];
+        int delay = (args.find("--delay") != args.end()) ? stoi(args["--delay"]) : 5000;
+
+        runPasswordSpraying(url, userlist, password, delay);
+
+    } else if (attackType == "ftp-brute") {
+        if (args.find("--host") == args.end() || args.find("--username") == args.end() || args.find("--wordlist") == args.end()) {
+            cerr << "Error: --host, --username, and --wordlist are required for FTP brute force.\n";
+            return 1;
+        }
+
+        string host = args["--host"];
+        string username = args["--username"];
+        string wordlist = args["--wordlist"];
+        int port = (args.find("--port") != args.end()) ? stoi(args["--port"]) : 21;
+        int delay = (args.find("--delay") != args.end()) ? stoi(args["--delay"]) : 1000;
+
+        runFTPBruteForce(host, port, username, wordlist, delay);
+
     } else {
-        cerr << "Error: Unknown attack type. Use 'brute', 'dict', 'hybrid', 'rules', or 'rainbow'.\n";
+        cerr << "Error: Unknown attack type.\n";
+        cerr << "Offline: 'brute', 'dict', 'hybrid', 'rules', 'rainbow'\n";
+        cerr << "Online: 'http-brute', 'credential-stuffing', 'password-spray', 'ftp-brute'\n";
         return 1;
     }
 
